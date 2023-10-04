@@ -1,0 +1,238 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <errno.h>
+#include "count.h"
+#include <ctype.h>
+#define BUFSIZE 4096
+
+extern int opterr;
+
+
+ 
+int main(int argc, char *argv[]) {
+    // Set default values
+    char *file_name = NULL;
+    char *prefix = "x";
+    char *suffix = "xaa";
+    char* str = "aa";
+    char* new_str = (char*) malloc(3 * sizeof(char));
+    int chunk = 1000;
+    int opt;
+    int type = 0;
+    int file_count = 1;
+    strcpy(new_str, str);
+    int def = 1;
+    int in_fd, out_fd, bytes_read;
+    char buf[BUFSIZE];
+    char out_filename[50];
+
+    opterr = 0;
+
+    while ((opt = getopt(argc, argv, "l:w:c:f:p:s:")) != EOF) {
+        switch (opt) {
+            case 'l':
+                if (optarg == NULL) {
+                    printf("\nERROR: line count not specified\n\n");
+                } else {
+                    chunk = atoi(optarg);
+                }
+                type = 0;
+                break;
+            case 'w':
+                if (optarg == NULL) {
+                    printf("\nERROR: word count not specified\n\n");
+                } else {
+                    chunk = atoi(optarg);
+                }
+                type = 1;
+                break;
+            case 'c':
+                if (optarg == NULL) {
+                    printf("\nERROR: char count not specified\n\n");
+                } else {
+                    chunk = atoi(optarg);
+                }
+                type = 2;
+                break;
+            case 'f':
+                file_name = optarg;
+                break;
+            case 'p':
+                prefix = optarg;
+                break;
+            case 's':
+	      if(optarg == NULL){
+		//suffix = "xaa";
+		return -1;
+	      }
+	      else{
+	    
+                suffix = optarg;
+		def = 0;
+	      }
+		
+                break;
+            default:
+                exit(EXIT_FAILURE);
+        }
+    }
+    
+
+    printf("file name: %s, prefix: %s, suffix: %s\n", file_name, prefix, suffix);
+    printf("Chunk number is equal to: %d, and the type is %d\n", chunk, type);
+
+    in_fd = open(file_name, O_RDONLY);
+    if (in_fd == -1) {
+        printf("Error opening input file: %s\n", strerror(errno));
+        return 1;
+    }
+
+    sprintf(out_filename, "%s%d.%s", prefix, file_count, suffix);
+    out_fd = open(out_filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (out_fd == -1) {
+        printf("Error opening output file: %s\n", strerror(errno));
+        return 1;
+    }
+
+    if (type == 0){
+      
+    int file_number = 1; // initialize file number
+    int chars_written = 0; // initialize character counter
+    int lines_written =0;
+    while ((bytes_read = read(in_fd, buf, BUFSIZE)) > 0) {
+      for (int i = 0; i < bytes_read; i++) {
+        char ch[2] = {buf[i], '\0'}; // create a string containing the current character
+	if(buf[i] == '\n'){
+          lines_written++;
+
+
+        }
+
+	
+        write(out_fd, ch, strlen(ch)); // write the character to the output file
+        chars_written++; // increment character counter
+
+        if (lines_written >= chunk) { // check if limit is reached
+          close(out_fd);
+          char filename[100]; // allocate buffer for filename
+                sprintf(filename, "%s.%s", prefix, suffix); // generate filename with number
+                out_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (out_fd == -1) {
+                    printf("Error opening output file: %s\n", strerror(errno));
+                    return 1;
+                }
+                file_number++; // increment file number
+                chars_written = 0; // reset character counte
+		lines_written = 0;
+                altSuffix(suffix,def);
+
+	}
+        }
+    }
+
+
+
+
+
+    }
+
+    
+    if (type == 1){
+
+    int file_number = 1; // initialize file number
+    int word_count = 0;
+    int chars_written = 0; // initialize character counter
+    int st = 0;
+    while ((bytes_read = read(in_fd, buf, BUFSIZE)) > 0) {
+      for (int i = 0; i < bytes_read; i++) {
+      
+              
+        if (isgraph(buf[i])) {
+	  if (!st) {
+	    // The current character is the start of a new word.
+	    st = 1;
+	    word_count++;
+	  }
+        }
+	else {
+	  // The current character is a space or a non-printable character.
+	  st = 0;
+        }
+      
+	       
+        char ch[2] = {buf[i], '\0'}; // create a string containing the current character
+        write(out_fd, ch, strlen(ch)); // write the character to the output file
+        chars_written++; // increment character counter
+        if (word_count >= chunk) { // check if character limit is reached
+          close(out_fd);
+          char filename[100]; // allocate buffer for filename
+                sprintf(filename, "%s.%s", prefix, suffix); // generate filename with number
+                out_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (out_fd == -1) {
+                    printf("Error\n");
+                    return 1;
+                }
+                file_number++; // increment file number
+		word_count = 0;
+                chars_written = 0; // reset character counte
+                altSuffix(suffix,def);
+
+	}
+      }
+    }
+
+
+
+
+
+
+
+
+
+      
+     
+    
+    }//type1
+
+
+      if (type == 2) {
+    int file_number = 1; // initialize file number
+    int chars_written = 0; // initialize character counter
+    while ((bytes_read = read(in_fd, buf, BUFSIZE)) > 0) {
+      for (int i = 0; i < bytes_read; i++) {
+	char ch[2] = {buf[i], '\0'}; // create a string containing the current character
+	write(out_fd, ch, strlen(ch)); // write the character to the output file
+	chars_written++; // increment character counter
+	if (chars_written >= chunk) { // check if character limit is reached
+	  close(out_fd);
+	  char filename[100]; // allocate buffer for filename
+                sprintf(filename, "%s.%s", prefix, suffix); // generate filename with number
+                out_fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                if (out_fd == -1) {
+                    printf("Error opening output file: %s\n", strerror(errno));
+                    return 1;
+                }
+                file_number++; // increment file number
+                chars_written = 0; // reset character counte
+		altSuffix(suffix,def);
+
+            }
+        }
+    }
+      } 
+
+
+
+
+
+close(in_fd);
+close(out_fd);
+return 0;
+}
+
+
+

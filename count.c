@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+
+void altSuffix(char *x, int def) {
+    if (strlen(x) < 3) {
+        return;
+    }
+    if(def == 0){
+        char c = *x;
+        char schar = *(x + 2);
+        char fchar = *(x + 1);
+
+        if (schar == 'z')
+        {
+            schar = 'a';
+            fchar++;
+        }
+        if(fchar == 'z'){
+            c++;
+            fchar = 'a';
+            }
+
+        *(x + 1) = fchar;
+        *(x + 2) = schar + 1;
+        *x = c;
+
+    }
+    else{
+
+        char schar = *(x + 1);
+        char fchar = *(x);
+
+        if (schar == '9')
+        {
+            schar = '0';
+            fchar++;
+        }
+        if(fchar == '9'){
+
+            fchar = '0';
+            }
+
+        *(x) = fchar;
+        *(x + 1) = schar + 1;
+
+
+
+
+
+    }
+}
+
+
+/*
+    int main() {
+    char xlr[] = "00";
+    for (int i = 0; i < 100; i++) {
+        altSuffix(xlr,0);
+        printf("%s\n", xlr);
+    }
+    printf("\n\n\n");
+    char str[] = "xaa";
+    char new_str[] = "xaa";
+    for (int i = 0; i < 100; i++) {
+        altSuffix(new_str,1);
+        printf("%s\n", new_str);
+    }
+    
+    return 0;
+}
+*/
